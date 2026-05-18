@@ -1,19 +1,9 @@
-# Architecture Proposal: Scalable Quickshell Ecosystem
+# Architecture: Scalable Quickshell Ecosystem
 
-This document outlines a unified, future-proof folder structure and naming convention for the Quickshell configuration repository. The goal is to ensure that as the project grows from simple menus to a full desktop environment replacement, the paths and names remain consistent and logical.
+This document outlines the unified folder structure and naming convention for the Quickshell configuration repository.
 
-## 1. Proposed Core Naming
-Standardizing the names of current modules using **CamelCase** to reflect their exact function for easier maintenance.
-
-| Current Folder Name | Current Main File | Proposed Folder Name | Proposed Main File | Rationale |
-| :--- | :--- | :--- | :--- | :--- |
-| `audio-menu` | `Main.qml` | `MediaControl` | `Main.qml` | Practical name for controlling audio streams and playback. |
-| `network-menu` | `Main.qml` | `ConnectionManager` | `Main.qml` | Clearly describes its role in managing Wi-Fi and Bluetooth. |
-
----
-
-## 2. Directory Structure
-A categorized hierarchy using CamelCase for all future modules.
+## 1. Directory Structure
+A categorized hierarchy using CamelCase for all modules.
 
 ```text
 quickshell/
@@ -23,8 +13,8 @@ quickshell/
 │   ├── theme/          # Global colors, typography, and spacing variables.
 │   └── utils/          # Common JavaScript helpers.
 ├── modules/            # On-demand "Flyouts" (launched via shortcut/click).
-│   ├── MediaControl/   # Formerly audio-menu.
-│   ├── ConnectionManager/ # Formerly network-menu.
+│   ├── MediaControl/
+│   ├── ConnectionManager/
 │   ├── PowerMenu/      # Session management (Lock, Logout, Shutdown).
 │   └── QuickSettings/  # Toggles (DND, Night Light, Brightness).
 ├── shell/              # Persistent components (always running).
@@ -52,7 +42,7 @@ quickshell/
 
 ---
 
-## 3. Hybrid Script Architecture
+## 2. Hybrid Script Architecture
 Instead of a single global launcher, we use **Category Launchers** to isolate specialized behaviors.
 
 | Launcher Path | Behavior Style | Best For |
@@ -61,21 +51,8 @@ Instead of a single global launcher, we use **Category Launchers** to isolate sp
 | `scripts/shell/launch.sh` | **Static** (Fixed anchor) | TaskBar, DesktopWidgets. |
 | `scripts/apps/launch.sh` | **Overlay** (Centered/Modal) | AppLauncher, CommandPalette. |
 
-### Key Advantage for Updaters:
+### Key Advantage:
 By passing the **Sub-Path** (e.g., `modules/launch.sh MediaControl`), the script automatically:
 1. Locates the correct `Main.qml`.
 2. Generates a unique lockfile based on the name (e.g., `QuickshellMediaControl.lock`).
 3. Applies the correct mathematical model (Rectangular Path vs Static).
-
----
-
-## 4. Migration Strategy
-To avoid breaking current Hyprland/Waybar integrations during this transition:
-1. **The Launchers**: Create the specialized `launch.sh` scripts in their respective category folders.
-2. **Paths**: Use `$QS_CONFIG_DIR` internally so that moving the whole `quickshell` folder doesn't break relative imports.
-3. **Hyprland Update**: Update bindings to point to the new category launchers.
-
-## 5. Verification
-- [ ] Confirm `ConnectivityHub` and `MediaCenter` names are acceptable.
-- [ ] Verify that the `modules/`, `shell/`, `panels/`, and `apps/` categorization covers all future ideas.
-- [ ] Ensure the script logic can dynamically resolve paths within this structure.

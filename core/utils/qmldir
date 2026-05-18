@@ -1,0 +1,2 @@
+module core.utils
+singleton SystemSettings 1.0 SystemSettings.qml

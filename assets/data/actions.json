@@ -1,0 +1,80 @@
+[
+  {
+    "title": "Network Manager",
+    "type": "Rice",
+    "cmd": "~/.config/quickshell/scripts/modules/launch.sh ConnectionManager --fromShortcut",
+    "icon": "network-wireless"
+  },
+  {
+    "title": "Media Controls",
+    "type": "Rice",
+    "cmd": "~/.config/quickshell/scripts/modules/launch.sh MediaControl --fromShortcut",
+    "icon": "media-playback-start"
+  },
+  {
+    "title": "Toggle Waybar",
+    "type": "Rice",
+    "cmd": "pkill -USR1 waybar",
+    "icon": "window-restore"
+  },
+  {
+    "title": "Lock Screen",
+    "type": "Rice",
+    "cmd": "hyprlock",
+    "icon": "lock"
+  },
+  {
+    "title": "Wallpaper Select",
+    "type": "Rice",
+    "cmd": "bash $HOME/.config/hypr/scripts/wallpaper/wallpaper-select-patch.sh",
+    "icon": "image"
+  },
+  {
+    "title": "Notification Center",
+    "type": "Rice",
+    "cmd": "swaync-client -t",
+    "icon": "notifications"
+  },
+  {
+    "title": "Logout Menu",
+    "type": "Rice",
+    "cmd": "bash $HOME/.config/hypr/scripts/utils/logout_menu.sh",
+    "icon": "system-log-out"
+  },
+  {
+    "title": "Toggle Floating",
+    "type": "Window",
+    "cmd": "hyprctl dispatch togglefloating",
+    "icon": "window-pop-out"
+  },
+  {
+    "title": "Fullscreen",
+    "type": "Window",
+    "cmd": "hyprctl dispatch fullscreen",
+    "icon": "view-fullscreen"
+  },
+  {
+    "title": "Cliphist Menu",
+    "type": "Rice",
+    "cmd": "cliphist list | rofi -dmenu | cliphist decode | wl-copy",
+    "icon": "edit-paste"
+  },
+  {
+    "title": "HDMI Extend",
+    "type": "HDMI",
+    "cmd": "hyprctl keyword monitor \"HDMI-A-1,1920x1080@60,auto-right,1.0\"",
+    "icon": "video-display"
+  },
+  {
+    "title": "HDMI Mirror",
+    "type": "HDMI",
+    "cmd": "hyprctl keyword monitor \"HDMI-A-1,1920x1080@60,0x0,1.0,mirror,eDP-1\"",
+    "icon": "video-display"
+  },
+  {
+    "title": "HDMI Disable",
+    "type": "HDMI",
+    "cmd": "hyprctl keyword monitor \"HDMI-A-1,disable\"",
+    "icon": "video-display"
+  }
+]

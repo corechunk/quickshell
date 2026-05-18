@@ -1,0 +1,2 @@
+module apps.CommandPalette.services
+singleton SearchService 1.0 SearchService.qml

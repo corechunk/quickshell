@@ -59,5 +59,6 @@ else
     export QS_LAUNCH_MODE="cursor"
 fi
 
-# Launch Quickshell module
-exec quickshell -p "$QS_CONFIG_DIR/modules/${MODULE_NAME}/Main.qml"
+# Launch Quickshell module from the config root to ensure relative imports are scoped correctly
+cd "$QS_CONFIG_DIR" || exit 1
+exec quickshell -p "modules/${MODULE_NAME}/Main.qml"

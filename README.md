@@ -2,6 +2,8 @@
 
 # ❄️ corechunk / quickshell
 ### *Modern QML-based Shell Modules & Widgets*
+### -----> This proj is incomplete. All of these are mostly planning and main plan is in plan.md <-----
+#### -----> We only have two modules right now. so, usable .. and u can try them <-----
 
 ---
 
