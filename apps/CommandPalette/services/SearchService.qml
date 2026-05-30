@@ -16,7 +16,7 @@ Item {
     property var actionsModel: []
     property var appsModel: []
     property var currentResults: []
-    property string mode: "apps"
+    property string mode: "actions"
 
     // --- Actions Loader ---
     Process {
@@ -33,6 +33,10 @@ Item {
                         return a;
                     });
                     console.log("SearchService: Loaded " + root.actionsModel.length + " actions");
+                    // Default view on launch
+                    if (root.mode === "actions") {
+                        root.currentResults = root.actionsModel;
+                    }
                 } catch (e) {
                     console.error("SearchService: Failed to parse actions.json");
                 }
@@ -62,7 +66,7 @@ Item {
                     if (!appMap[file]) appMap[file] = {};
                     // Only take the first occurrence (usually the generic one before translations)
                     if (appMap[file][key] === undefined) {
-                        appMap[file][key] = value;
+                        appMap[file][key] = value.trim();
                     }
                 }
                 
@@ -72,46 +76,46 @@ Item {
                     let data = appMap[file];
                     if (data.NoDisplay === "true") continue;
                     if (!data.Name || !data.Exec) continue;
-                    if (seenTitles.has(data.Name)) continue;
-                    seenTitles.add(data.Name);
+                    let title = data.Name.trim();
+                    if (seenTitles.has(title)) continue;
+                    seenTitles.add(title);
                     
                     apps.push({
-                        "title": data.Name,
-                        "icon": data.Icon || "application-x-executable",
-                        "cmd": data.Exec.split(" %")[0].replace(/'/g, "").replace(/\"/g, ""),
+                        "title": title,
+                        "icon": data.Icon ? data.Icon.trim() : "󰀻",
+                        "cmd": data.Exec.split(" %")[0].replace(/'/g, "").replace(/\"/g, "").trim(),
                         "type": "Application"
                     });
                 }
                 root.appsModel = apps;
                 console.log("SearchService: Indexed " + apps.length + " apps");
-                // Show some apps by default
-                if (root.currentResults.length === 0 && apps.length > 0) {
-                    root.currentResults = apps.slice(0, 10);
-                }
+                if (root.mode === "apps") root.currentResults = apps.slice(0, 10);
             }
         }
     }
 
     function query(input) {
-        if (!input || input.trim().length === 0) {
-            root.mode = "apps";
-            root.currentResults = root.appsModel.slice(0, 10);
+        let q_raw = (input || "").trim();
+        if (q_raw === "" || q_raw === ">" || q_raw === "|") {
+            root.mode = q_raw === ">" ? "actions" : (q_raw === "|" ? "math" : "apps");
+            if (root.mode === "actions") root.currentResults = root.actionsModel;
+            else if (root.mode === "apps") root.currentResults = root.appsModel.slice(0, 15);
+            else root.currentResults = [];
             return;
         }
 
         if (input.startsWith(">")) {
             root.mode = "actions";
-            let q = input.slice(1).toLowerCase();
+            let q = input.slice(1).toLowerCase().trim();
             root.currentResults = root.actionsModel.filter(a => a.title.toLowerCase().includes(q));
         } else if (input.startsWith("|")) {
             root.mode = "math";
-            doMath(input.slice(1));
+            doMath(input.slice(1).trim());
         } else {
             root.mode = "apps";
-            let q = input.toLowerCase();
+            let q = input.toLowerCase().trim();
             let filtered = root.appsModel.filter(a => a.title.toLowerCase().includes(q));
             
-            // Priority sorting (Starts with > Contains)
             filtered.sort((a, b) => {
                 let aStarts = a.title.toLowerCase().startsWith(q);
                 let bStarts = b.title.toLowerCase().startsWith(q);
@@ -120,8 +124,7 @@ Item {
                 return 0;
             });
             
-            root.currentResults = filtered.slice(0, 10);
-            console.log("SearchService: Found " + root.currentResults.length + " results for '" + q + "'");
+            root.currentResults = filtered.slice(0, 15);
         }
     }
 

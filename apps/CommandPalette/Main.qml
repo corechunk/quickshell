@@ -18,9 +18,9 @@ ShellRoot {
             id: window
             property var currentScreen: modelData
             property var modelData: null
-            
+
             // Helpful aliases for the children to access singletons safely
-            property var theme: CoreTheme.Theme
+            property var theme: CoreTheme.AppTheme
             property var settings: CoreUtils.SystemSettings
 
             anchors { top: true; bottom: true; left: true; right: true }
@@ -84,7 +84,7 @@ ShellRoot {
                 color: theme.bgDark || "#0a0a0f" 
                 radius: 24
                 border.width: 2
-                border.color: theme.accent || "#89b4fa"
+                border.color: theme.accent
                 
                 layer.enabled: true
                 
@@ -114,13 +114,13 @@ ShellRoot {
                         color: theme.surface || Qt.rgba(1,1,1,0.05)
                         radius: 16
                         border.width: 2
-                        border.color: searchInput.activeFocus ? (theme.accent || "#89b4fa") : (theme.border || "#2a2a37")
+                        border.color: theme.accent
 
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 5
                             Text { 
                                 text: "󰍉"
-                                color: theme.accent || "#89b4fa"
+                                color: theme.accent
                                 font.pixelSize: 28; Layout.leftMargin: 20 
                             }
 
@@ -139,25 +139,28 @@ ShellRoot {
                                 }
                                 
                                 Keys.onPressed: (event) => {
+                                    const isEmpty = text === "" || text === ">" || text === "|";
+                                    const isCtrl = event.modifiers & Qt.ControlModifier;
+
                                     if (event.key === Qt.Key_Down) {
                                         resultsView.currentIndex = (resultsView.currentIndex + 1) % resultsView.count;
                                         event.accepted = true;
                                     } else if (event.key === Qt.Key_Up) {
                                         resultsView.currentIndex = (resultsView.currentIndex - 1 + resultsView.count) % resultsView.count;
                                         event.accepted = true;
-                                    } else if (event.key === Qt.Key_Right && (event.modifiers & Qt.ControlModifier)) {
+                                    } else if (event.key === Qt.Key_Right && (isCtrl || isEmpty)) {
                                         let modes = ["apps", "actions", "math"];
                                         let idx = (modes.indexOf(SearchService.mode) + 1) % 3;
-                                        if (modes[idx] === "math") text = "|";
-                                        else if (modes[idx] === "actions") text = ">";
-                                        else text = "";
+                                        let newMode = modes[idx];
+                                        text = (newMode === "math" ? "|" : (newMode === "actions" ? ">" : ""));
+                                        SearchService.query(text); // Force update to fix left-arrow glitch
                                         event.accepted = true;
-                                    } else if (event.key === Qt.Key_Left && (event.modifiers & Qt.ControlModifier)) {
+                                    } else if (event.key === Qt.Key_Left && (isCtrl || isEmpty)) {
                                         let modes = ["apps", "actions", "math"];
                                         let idx = (modes.indexOf(SearchService.mode) - 1 + 3) % 3;
-                                        if (modes[idx] === "math") text = "|";
-                                        else if (modes[idx] === "actions") text = ">";
-                                        else text = "";
+                                        let newMode = modes[idx];
+                                        text = (newMode === "math" ? "|" : (newMode === "actions" ? ">" : ""));
+                                        SearchService.query(text); // Force update to fix left-arrow glitch
                                         event.accepted = true;
                                     } else if (event.key === Qt.Key_Return) {
                                         try {
@@ -176,8 +179,10 @@ ShellRoot {
 
                     // 2. Mode Indicators (Always Visible)
                     RowLayout {
+                        id: ribbon
                         Layout.fillWidth: true; Layout.leftMargin: 10
                         spacing: 20
+                        z: 100 // Stay above the results list
                         
                         Repeater {
                             model: [
@@ -188,13 +193,15 @@ ShellRoot {
                             delegate: Item {
                                 Layout.preferredWidth: 110; Layout.preferredHeight: 40
                                 property bool isActive: SearchService.mode === modelData.id
+                                z: isActive ? 110 : 10
                                 
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: 10
-                                    color: isActive ? (theme.highlight || Qt.rgba(1,1,1,0.15)) : (modeMouse.containsMouse ? Qt.rgba(1,1,1,0.05) : "transparent")
-                                    border.color: isActive ? (theme.accent || "#89b4fa") : "transparent"
-                                    border.width: isActive ? 2 : 0
+                                    color: isActive ? (theme.highlight || "transparent") : (modeMouse.containsMouse ? Qt.rgba(1,1,1,0.08) : "transparent")
+                                    border.color: theme.accent
+                                    border.width: isActive ? 2 : (modeMouse.containsMouse ? 1 : 0)
+                                    opacity: isActive || modeMouse.containsMouse ? 1.0 : 0.3
                                     
                                     scale: isActive ? 1.05 : (modeMouse.containsMouse ? 1.02 : 1.0)
                                     Behavior on scale { NumberAnimation { duration: 200 } }
@@ -206,14 +213,14 @@ ShellRoot {
                                     spacing: 10
                                     Text { 
                                         text: modelData.icon
-                                        color: isActive ? (theme.accent || "#89b4fa") : (theme.fg || "#cdd6f4")
-                                        opacity: isActive ? 1.0 : 0.4
+                                        color: isActive ? theme.accent : (theme.fg || "white")
+                                        opacity: isActive ? 1.0 : (modeMouse.containsMouse ? 0.8 : 0.4)
                                         font.pixelSize: 18 
                                     }
                                     Text { 
                                         text: modelData.name
                                         color: theme.fg || "#cdd6f4"
-                                        opacity: isActive ? 1.0 : 0.4
+                                        opacity: isActive ? 1.0 : (modeMouse.containsMouse ? 0.8 : 0.4)
                                         font.pixelSize: 12
                                         font.bold: isActive
                                         font.letterSpacing: 1
@@ -224,9 +231,9 @@ ShellRoot {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     onClicked: {
-                                        if (modelData.id === "math") searchInput.text = "|";
-                                        else if (modelData.id === "actions") searchInput.text = ">";
-                                        else searchInput.text = "";
+                                        let newPrefix = (modelData.id === "math" ? "|" : (modelData.id === "actions" ? ">" : ""));
+                                        searchInput.text = newPrefix;
+                                        SearchService.query(newPrefix);
                                         searchInput.forceActiveFocus();
                                     }
                                 }
@@ -237,21 +244,29 @@ ShellRoot {
                     // 3. Results List
                     ListView {
                         id: resultsView
-                        Layout.fillWidth: true; Layout.fillHeight: true; clip: false
+                        Layout.fillWidth: true; Layout.fillHeight: true
+                        Layout.leftMargin: 15; Layout.rightMargin: 15 // Extra room for pop and borders
+                        clip: false
                         model: {
                             try { return SearchService.currentResults } catch(e) { return [] }
                         }
                         spacing: 12
                         delegate: ResultItem { 
-                            width: resultsView.width
+                            width: resultsView.width - 10
                             theme: window.theme
+                            z: ListView.isCurrentItem ? 100 : 1 // High Z-order to stay on top
                             title: modelData.title || ""
                             type: modelData.type || "Item"
                             icon: modelData.icon || ""
                             
+                            onHovered: {
+                                if (resultsView.currentIndex !== index) {
+                                    resultsView.currentIndex = index;
+                                }
+                            }
+
                             MouseArea {
                                 anchors.fill: parent
-                                hoverEnabled: true
                                 onClicked: executeCommand(modelData.cmd)
                             }
                         }
