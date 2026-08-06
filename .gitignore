@@ -1,0 +1,15 @@
+# ── Python ──────────────────────────────────
+# Never commit the virtual environment! It's 1000s of files and machine-specific
+venv/
+__pycache__/
+*.pyc
+
+# ── Google API Security ─────────────────────
+# NEVER commit these! They give full access to the Google Classroom account
+credentials.json
+token.json
+
+# ── OS & Temporary Files ────────────────────
+.DS_Store
+*.log
+/tmp/
